@@ -5,22 +5,41 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Iran Matching Game</title>
   <style>
-    body{margin:0;background:#0f1724;color:#fff;font-family:system-ui,Arial,sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh}
-    .game{max-width:800px;width:100%;padding:20px;background:#111827;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.6)}
-    h1{text-align:center;margin-bottom:20px;color:#fff}
+    body{
+      margin:0;
+      background:url('Desert.jpeg') center/cover no-repeat fixed;
+      color:#fff;
+      font-family:system-ui,Arial,sans-serif;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      min-height:100vh;
+    }
+    .game{
+      max-width:800px;
+      width:100%;
+      padding:20px;
+      background:rgba(222,191,155,0.9);
+      border-radius:20px;
+      box-shadow:0 8px 24px rgba(0,0,0,0.6);
+      color:#fff;
+    }
+    h1{text-align:center;margin-bottom:20px;color:#fff;text-shadow:1px 1px 4px #000}
     .question{margin-bottom:20px;font-weight:600;color:#fff}
     .match-area{display:flex;justify-content:space-between;gap:40px;flex-wrap:wrap}
     .list{width:45%;display:flex;flex-direction:column;gap:10px}
-    .item{background:#1f2937;padding:10px;border-radius:8px;text-align:center;cursor:grab;color:#fff}
-    .dropzone{background:#374151;padding:10px;border-radius:8px;min-height:40px;display:flex;align-items:center;justify-content:center;color:#fff}
+    .item{background:#e4c49b;padding:10px;border-radius:8px;text-align:center;cursor:grab;color:#000;font-weight:600}
+    .dropzone{background:#c7a77a;padding:10px;border-radius:8px;min-height:40px;display:flex;align-items:center;justify-content:center;color:#000;font-weight:600}
     .next{margin-top:20px;background:#10b981;border:none;padding:10px 16px;border-radius:8px;cursor:pointer;font-weight:bold;color:#fff}
     .hidden{display:none!important}
     .overlay{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
     .overlay img{width:200px;height:200px;border-radius:12px;margin-bottom:10px}
     .score{font-size:20px;font-weight:bold}
+    canvas{position:fixed;top:0;left:0;pointer-events:none;width:100%;height:100%}
   </style>
 </head>
 <body>
+  <canvas id="confetti"></canvas>
   <div class="game">
     <h1>Iran Matching Game</h1>
     <div id="quiz">
@@ -127,14 +146,15 @@ function drop(e){e.preventDefault();
     dragged.remove();
     this.style.background='#10b981';
     this.style.color='#fff';
+    confettiBurst(this);
     if(!leftList.children.length){
       if(index<3) scoreMain++; else bonus++;
-      setTimeout(()=>nextQ(),800);
+      setTimeout(()=>nextQ(),1000);
     }
   } else {
     tries--;
     this.style.background='#dc2626';
-    setTimeout(()=>this.style.background='#374151',500);
+    setTimeout(()=>this.style.background='#c7a77a',500);
     if(tries<=0){
       nextQ();
     }
@@ -154,6 +174,36 @@ function endGame(){
   quiz.classList.add('hidden');
   final.classList.remove('hidden');
   scoreEl.textContent=`Score: ${scoreMain}/3  +${bonus}`;
+}
+
+// Confetti effect
+const canvas=document.getElementById('confetti');
+const ctx=canvas.getContext('2d');
+function resize(){canvas.width=window.innerWidth;canvas.height=window.innerHeight;}
+window.addEventListener('resize',resize);resize();
+
+function confettiBurst(target){
+  const rect=target.getBoundingClientRect();
+  const x=rect.left+rect.width/2;
+  const y=rect.top+rect.height/2;
+  const particles=[];
+  for(let i=0;i<30;i++){
+    particles.push({x,y,vx:(Math.random()-0.5)*8,vy:(Math.random()-1)*8,life:60,color:`hsl(${Math.random()*360},100%,70%)`});
+  }
+  function animate(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    particles.forEach(p=>{
+      p.x+=p.vx;
+      p.y+=p.vy;
+      p.vy+=0.3;
+      p.life--;
+      ctx.fillStyle=p.color;
+      ctx.fillRect(p.x,p.y,5,5);
+    });
+    for(let i=particles.length-1;i>=0;i--){if(particles[i].life<=0)particles.splice(i,1);}
+    if(particles.length>0)requestAnimationFrame(animate);
+  }
+  animate();
 }
 
 renderQuestion();
