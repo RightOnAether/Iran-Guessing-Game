@@ -14,7 +14,7 @@
     .item{background:#1f2937;padding:10px;border-radius:8px;text-align:center;cursor:grab;color:#fff}
     .dropzone{background:#374151;padding:10px;border-radius:8px;min-height:40px;display:flex;align-items:center;justify-content:center;color:#fff}
     .next{margin-top:20px;background:#10b981;border:none;padding:10px 16px;border-radius:8px;cursor:pointer;font-weight:bold;color:#fff}
-    .hidden{display:none}
+    .hidden{display:none!important}
     .overlay{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
     .overlay img{width:200px;height:200px;border-radius:12px;margin-bottom:10px}
     .score{font-size:20px;font-weight:bold}
@@ -35,7 +35,7 @@
       <img src="no filter.webp" alt="image">
       <div style="font-size:24px;font-weight:800">YOU DID IT!!! NO WAY!!!</div>
       <div class="score" id="score"></div>
-      <button class="next" onclick="location.reload()">Play Again</button>
+      <button class="next" id="restartBtn">Play Again</button>
     </div>
   </div>
 
@@ -76,10 +76,16 @@ const nextBtn=document.getElementById('nextBtn');
 const final=document.getElementById('final');
 const quiz=document.getElementById('quiz');
 const scoreEl=document.getElementById('score');
+const restartBtn=document.getElementById('restartBtn');
+
+restartBtn.addEventListener('click',()=>location.reload());
+nextBtn.addEventListener('click',()=>nextQ());
 
 function shuffle(arr){return arr.sort(()=>Math.random()-0.5);}
 
 function renderQuestion(){
+  quiz.classList.remove('hidden');
+  final.classList.add('hidden');
   const q=data[index];
   questionText.textContent=q.q;
   leftList.innerHTML='';
@@ -143,8 +149,6 @@ function nextQ(){
     renderQuestion();
   }
 }
-
-nextBtn.addEventListener('click',()=>nextQ());
 
 function endGame(){
   quiz.classList.add('hidden');
