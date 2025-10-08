@@ -3,269 +3,156 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Iran Quick Quiz</title>
+  <title>Iran Matching Game</title>
   <style>
-    :root{--bg:#0f1724;--card:#111827;--accent:#10b981;--muted:#94a3b8}
-    *{box-sizing:border-box;font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
-    body{margin:0;background:linear-gradient(180deg,#071028 0%,#071724 100%);color:#e6eef8;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
-    .app{width:960px;max-width:100%;background:linear-gradient(180deg,rgba(255,255,255,0.02),transparent);border-radius:12px;padding:24px;box-shadow:0 10px 30px rgba(2,6,23,0.6)}
-    h1{margin:0 0 12px;font-size:20px}
-    .card{background:var(--card);padding:18px;border-radius:10px}
-    .question{font-weight:600;margin-bottom:12px}
-    .choices{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
-    .choice{background:#0b1220;border:1px solid rgba(255,255,255,0.04);padding:12px;border-radius:8px;cursor:pointer;text-align:left}
-    .choice:hover{transform:translateY(-3px)}
-    .meta{display:flex;justify-content:space-between;align-items:center;margin-top:12px}
-    button.next{background:var(--accent);border:none;padding:10px 14px;border-radius:8px;color:#042018;font-weight:700;cursor:pointer}
-    .center{display:flex;flex-direction:column;align-items:center}
-    #canvas-confetti{position:absolute;left:0;top:0;pointer-events:none}
-    .overlay{position:relative;margin-top:18px;min-height:220px;display:flex;align-items:center;justify-content:center}
-    .spiral-wrap{position:relative;width:260px;height:260px}
-    .spiral-img{width:120px;height:120px;border-radius:12px;display:block;opacity:0}
-    .big-final{display:none;flex-direction:column;align-items:center;gap:10px}
-    .big-final img{width:220px;height:220px;border-radius:12px}
-    .score{font-size:20px;font-weight:800}
-    .badge{background:#05202a;padding:6px 10px;border-radius:999px}
-    .small{font-size:13px;color:var(--muted)}
-    @media (max-width:520px){.choices{grid-template-columns:1fr}.spiral-wrap{width:200px;height:200px}}
+    body{margin:0;background:#0f1724;color:#fff;font-family:system-ui,Arial,sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh}
+    .game{max-width:800px;width:100%;padding:20px;background:#111827;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.6)}
+    h1{text-align:center;margin-bottom:20px;color:#fff}
+    .question{margin-bottom:20px;font-weight:600;color:#fff}
+    .match-area{display:flex;justify-content:space-between;gap:40px;flex-wrap:wrap}
+    .list{width:45%;display:flex;flex-direction:column;gap:10px}
+    .item{background:#1f2937;padding:10px;border-radius:8px;text-align:center;cursor:grab;color:#fff}
+    .dropzone{background:#374151;padding:10px;border-radius:8px;min-height:40px;display:flex;align-items:center;justify-content:center;color:#fff}
+    .next{margin-top:20px;background:#10b981;border:none;padding:10px 16px;border-radius:8px;cursor:pointer;font-weight:bold;color:#fff}
+    .hidden{display:none}
+    .overlay{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+    .overlay img{width:200px;height:200px;border-radius:12px;margin-bottom:10px}
+    .score{font-size:20px;font-weight:bold}
   </style>
 </head>
 <body>
-  <div class="app card">
-    <h1>Iran Quiz — short & quick</h1>
-    <div id="quizArea">
-      <div id="questionCard" class="card">
-        <div id="qText" class="question">Loading...</div>
-        <div id="choices" class="choices"></div>
-        <div class="meta">
-          <div class="small">Question <span id="qIndex">1</span> of <span id="qTotal">5</span></div>
-          <button id="skipBtn" class="next">Skip</button>
-        </div>
+  <div class="game">
+    <h1>Iran Matching Game</h1>
+    <div id="quiz">
+      <div class="question" id="questionText">Loading...</div>
+      <div class="match-area">
+        <div class="list" id="leftList"></div>
+        <div class="list" id="rightList"></div>
       </div>
-      <div class="overlay center">
-        <canvas id="canvas-confetti"></canvas>
-        <div id="spiral" class="spiral-wrap" aria-hidden="true"></div>
-      </div>
+      <button class="next" id="nextBtn">Next</button>
     </div>
-
-    <div id="finalScreen" class="card big-final center">
-      <img src="no filter.webp" id="finalImage" alt="celebration image">
-      <div style="font-size:26px;font-weight:900">YOU DID IT!!! NO WAY!!!</div>
-      <div class="score">Score: <span id="mainScore">0</span>/3 <span id="bonusAdd" class="badge">+0</span></div>
-      <div class="small">Thanks for playing.</div>
-      <div style="margin-top:12px"><button id="restart" class="next">Play Again</button></div>
+    <div id="final" class="overlay hidden">
+      <img src="no filter.webp" alt="image">
+      <div style="font-size:24px;font-weight:800">YOU DID IT!!! NO WAY!!!</div>
+      <div class="score" id="score"></div>
+      <button class="next" onclick="location.reload()">Play Again</button>
     </div>
-
   </div>
 
 <script>
-// Questions (3 main + 2 bonus). Keep sentences turned into multiple choice.
-const questions = [
+const data=[
   {
-    q: 'What percent of Iran\'s population does the government say is Muslim?',
-    choices: ['50%', '75%', '99.4%', '85%'],
-    a: 2
+    q:'Match the correct fact about Iran\'s religion:',
+    left:['99.4% Muslim','90–95% Shia','Official minorities'],
+    right:['Population is mostly Muslim','Majority branch','Zoroastrians, Jews, Christians']
   },
   {
-    q: 'Which branch of Islam is about 90–95% of Iran\'s Muslim population?',
-    choices: ['Sunni', 'Shia', 'Sufi', 'Ibadi'],
-    a: 1
+    q:'Match the correct Sunni group:',
+    left:['Turkmen','Arabs','Kurds'],
+    right:['Northern Iran','Southwest Iran','Western Iran']
   },
   {
-    q: 'Which of these groups are officially recognized religious minorities in Iran?',
-    choices: ['Zoroastrians, Jews, Christians', 'Hindus and Buddhists', 'Atheists only', 'All faiths equally'],
-    a: 0
-  },
-  // bonus
-  {
-    q: 'Most Sunnis in Iran belong to groups like which of the following?',
-    choices: ['Turkmen, Arabs, Baluchis, Kurds', 'Persians only', 'Azerbaijanis only', 'Baloch and Persians only'],
-    a: 0,
-    bonus: true
+    q:'Match the government description:',
+    left:['Unitary','Islamic Republic','Supreme Leader'],
+    right:['One central government','Based on Islamic law','Holds most power']
   },
   {
-    q: 'Iran is described as a unitary system. What does that mean?',
-    choices: ['Multiple independent states', 'One central government', 'A loose federation', 'No government'],
-    a: 1,
-    bonus: true
+    q:'Bonus: Religion freedom',
+    left:['Recognized groups','Must obey law','Other Islamic groups'],
+    right:['Zoroastrians, Jews, Christians','Can practice if lawful','Should be respected']
+  },
+  {
+    q:'Bonus: Sunni distribution',
+    left:['Baluchis','Turkmen','Kurds'],
+    right:['Southeast Iran','Northeast Iran','West Iran']
   }
 ];
 
-let index = 0; // which question shown
-let mainCorrect = 0;
-let bonusCorrectCount = 0;
-const totalMain = 3;
+let index=0,scoreMain=0,bonus=0,tries=3;
+const questionText=document.getElementById('questionText');
+const leftList=document.getElementById('leftList');
+const rightList=document.getElementById('rightList');
+const nextBtn=document.getElementById('nextBtn');
+const final=document.getElementById('final');
+const quiz=document.getElementById('quiz');
+const scoreEl=document.getElementById('score');
 
-const qText = document.getElementById('qText');
-const choicesDiv = document.getElementById('choices');
-const qIndex = document.getElementById('qIndex');
-const qTotal = document.getElementById('qTotal');
-const spiral = document.getElementById('spiral');
-const confettiCanvas = document.getElementById('canvas-confetti');
-const finalScreen = document.getElementById('finalScreen');
-const mainScoreEl = document.getElementById('mainScore');
-const bonusAddEl = document.getElementById('bonusAdd');
-const restart = document.getElementById('restart');
-const skipBtn = document.getElementById('skipBtn');
+function shuffle(arr){return arr.sort(()=>Math.random()-0.5);}
 
-qTotal.textContent = questions.length;
-
-function showQuestion(i){
-  const it = questions[i];
-  qIndex.textContent = i+1;
-  qText.textContent = it.q;
-  choicesDiv.innerHTML = '';
-  it.choices.forEach((c,ci)=>{
-    const btn = document.createElement('button');
-    btn.className = 'choice';
-    btn.innerHTML = `<strong>${String.fromCharCode(65+ci)}.</strong> ${c}`;
-    btn.addEventListener('click', ()=>selectChoice(ci, it));
-    choicesDiv.appendChild(btn);
+function renderQuestion(){
+  const q=data[index];
+  questionText.textContent=q.q;
+  leftList.innerHTML='';
+  rightList.innerHTML='';
+  tries=3;
+  const left=shuffle([...q.left]);
+  const right=shuffle([...q.right]);
+  left.forEach(text=>{
+    const div=document.createElement('div');
+    div.className='item';
+    div.textContent=text;
+    div.draggable=true;
+    div.dataset.text=text;
+    div.addEventListener('dragstart',dragStart);
+    leftList.appendChild(div);
+  });
+  right.forEach(text=>{
+    const dz=document.createElement('div');
+    dz.className='dropzone';
+    dz.textContent=text;
+    dz.dataset.text=text;
+    dz.addEventListener('dragover',dragOver);
+    dz.addEventListener('drop',drop);
+    rightList.appendChild(dz);
   });
 }
 
-function selectChoice(ci,it){
-  const correct = ci === it.a;
-  // disable choices
-  [...choicesDiv.children].forEach(b=>b.disabled=true);
-  if(correct){
-    if(it.bonus) bonusCorrectCount++;
-    else mainCorrect++;
-    runConfettiThenSpiral().then(()=>{
-      nextQuestion();
-    });
-  } else {
-    // mark wrong choice briefly, then continue
-    const wrong = [...choicesDiv.children][ci];
-    wrong.style.opacity = 0.6;
-    wrong.textContent = wrong.textContent + ' ✖';
-    setTimeout(nextQuestion,900);
-  }
-}
-
-function nextQuestion(){
-  index++;
-  if(index >= questions.length){
-    showFinal();
-  } else {
-    showQuestion(index);
-    clearSpiral();
-  }
-}
-
-skipBtn.addEventListener('click', ()=>{
-  // skip counts as wrong and go next
-  nextQuestion();
-});
-restart.addEventListener('click', ()=>location.reload());
-
-// --- confetti implementation (simple particles on canvas)
-const ctx = confettiCanvas.getContext('2d');
-function resizeCanvas(){
-  confettiCanvas.width = window.innerWidth;
-  confettiCanvas.height = window.innerHeight;
-}
-window.addEventListener('resize', resizeCanvas);
-resizeCanvas();
-
-function runConfettiThenSpiral(){
-  return new Promise((resolve)=>{
-    launchConfetti();
-    // run for 900ms then start spiral
-    setTimeout(()=>{
-      clearConfetti();
-      startSpiralAnimation().then(resolve);
-    },900);
-  });
-}
-
-let particles = [];
-function launchConfetti(){
-  particles = [];
-  const colors = ['#f97316','#f43f5e','#a78bfa','#34d399','#60a5fa'];
-  for(let i=0;i<80;i++){
-    particles.push({x:window.innerWidth/2,y:window.innerHeight/4+30, vx:(Math.random()-0.5)*6, vy:Math.random()*-8-2, r:6*(Math.random()*0.8+0.4), color:colors[i%colors.length], rot:Math.random()*360, vr:(Math.random()-0.5)*6});
-  }
-  animateConfetti();
-}
-let confettiAnim;
-function animateConfetti(){
-  cancelAnimationFrame(confettiAnim);
-  confettiAnim = requestAnimationFrame(animateConfetti);
-  ctx.clearRect(0,0,confettiCanvas.width,confettiCanvas.height);
-  particles.forEach(p=>{
-    p.vy += 0.3; p.x += p.vx; p.y += p.vy; p.rot += p.vr;
-    ctx.save();
-    ctx.translate(p.x,p.y); ctx.rotate(p.rot*Math.PI/180);
-    ctx.fillStyle = p.color; ctx.fillRect(-p.r/2,-p.r/2,p.r,p.r*0.6);
-    ctx.restore();
-  });
-}
-function clearConfetti(){
-  cancelAnimationFrame(confettiAnim);
-  ctx.clearRect(0,0,confettiCanvas.width,confettiCanvas.height);
-}
-
-// Spiral animation of image. The image file should exist as "no filter.webp" next to this html.
-function clearSpiral(){
-  spiral.innerHTML = '';
-}
-function startSpiralAnimation(){
-  return new Promise((resolve)=>{
-    spiral.innerHTML = '';
-    const img = document.createElement('img');
-    img.src = 'no filter.webp';
-    img.className = 'spiral-img';
-    img.style.position = 'absolute';
-    img.style.left = '50%'; img.style.top='50%'; img.style.transform='translate(-50%,-50%)';
-    spiral.appendChild(img);
-    // animate along spiral path
-    const centerX = spiral.clientWidth/2;
-    const centerY = spiral.clientHeight/2;
-    const maxTheta = Math.PI*4; // two turns
-    const start = performance.now();
-    const duration = 1100;
-    function step(t){
-      const p = Math.min(1,(t-start)/duration);
-      const theta = p * maxTheta;
-      const radius = 10 + p * (Math.min(spiral.clientWidth,spiral.clientHeight)/2 - 30);
-      const x = centerX + radius * Math.cos(theta) - img.clientWidth/2;
-      const y = centerY + radius * Math.sin(theta) - img.clientHeight/2;
-      const rot = theta*40;
-      img.style.left = x + 'px';
-      img.style.top = y + 'px';
-      img.style.opacity = Math.min(1, p*1.4);
-      img.style.transform = `rotate(${rot}deg)`;
-      if(p < 1) requestAnimationFrame(step);
-      else{
-        // show Good Job text overlay
-        const tdiv = document.createElement('div');
-        tdiv.textContent = 'Good Job';
-        tdiv.style.position='absolute';
-        tdiv.style.left='50%'; tdiv.style.top='calc(50% + 80px)';
-        tdiv.style.transform='translateX(-50%)';
-        tdiv.style.fontWeight=900; tdiv.style.fontSize='18px';
-        spiral.appendChild(tdiv);
-        setTimeout(()=>{
-          resolve();
-        },700);
-      }
+let dragged;
+function dragStart(e){dragged=this;}
+function dragOver(e){e.preventDefault();}
+function drop(e){e.preventDefault();
+  const leftTxt=dragged.dataset.text;
+  const rightTxt=this.dataset.text;
+  const q=data[index];
+  const correctIndex=q.left.indexOf(leftTxt);
+  const correct=q.right[correctIndex];
+  if(rightTxt===correct){
+    this.textContent='✅ '+rightTxt;
+    dragged.remove();
+    this.style.background='#10b981';
+    this.style.color='#fff';
+    if(!leftList.children.length){
+      if(index<3) scoreMain++; else bonus++;
+      setTimeout(()=>nextQ(),800);
     }
-    requestAnimationFrame(step);
-  });
+  } else {
+    tries--;
+    this.style.background='#dc2626';
+    setTimeout(()=>this.style.background='#374151',500);
+    if(tries<=0){
+      nextQ();
+    }
+  }
 }
 
-function showFinal(){
-  document.getElementById('quizArea').style.display='none';
-  finalScreen.style.display='flex';
-  mainScoreEl.textContent = mainCorrect;
-  const bonusAdd = Math.max(0, Math.min(2, bonusCorrectCount));
-  bonusAddEl.textContent = '+' + bonusAdd;
+function nextQ(){
+  index++;
+  if(index>=data.length){
+    endGame();
+  } else {
+    renderQuestion();
+  }
 }
 
-// init
-showQuestion(index);
+nextBtn.addEventListener('click',()=>nextQ());
 
+function endGame(){
+  quiz.classList.add('hidden');
+  final.classList.remove('hidden');
+  scoreEl.textContent=`Score: ${scoreMain}/3  +${bonus}`;
+}
+
+renderQuestion();
 </script>
 </body>
 </html>
